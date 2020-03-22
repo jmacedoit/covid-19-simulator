@@ -1,0 +1,6 @@
+
+/**
+ * Export config.
+ */
+
+export default {};

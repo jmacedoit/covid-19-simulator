@@ -1,0 +1,68 @@
+{
+  "name": "covid-19-simulator",
+  "version": "0.0.0",
+  "description": "Covid 19 simulator",
+  "main": "index.js",
+  "scripts": {
+    "start": "parcel ./src/index.html",
+    "lint": "eslint src",
+    "lint-staged": "lint-staged"
+  },
+  "pre-commit": [
+    "lint-staged"
+  ],
+  "keywords": [
+    "covid-19",
+    "coronavirus",
+    "virus",
+    "corona",
+    "simulator",
+    "propagation",
+    "model",
+    "interactive"
+  ],
+  "author": "João Macedo",
+  "license": "MIT",
+  "dependencies": {
+    "@nivo/line": "^0.61.1",
+    "analysis": "^0.4.2",
+    "binance-api-node": "^0.9.15",
+    "color": "^3.1.2",
+    "colormix": "^3.2.0",
+    "components": "^0.1.0",
+    "lodash": "^4.17.15",
+    "moment": "^2.24.0",
+    "natural-spline-interpolator": "^1.0.2",
+    "prop-types": "^15.7.2",
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
+    "react-grid-system": "^6.2.4",
+    "react-simple-file-input": "^2.1.0",
+    "recompose": "^0.30.0",
+    "strategy": "^1.1.1",
+    "styled-components": "^4.4.1",
+    "styled-normalize": "^8.0.7",
+    "styled-tools": "^1.7.1",
+    "tinygradient": "^1.1.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/plugin-proposal-class-properties": "^7.3.0",
+    "@babel/plugin-transform-runtime": "^7.8.3",
+    "@babel/runtime": "^7.8.4",
+    "eslint": "5.16.0",
+    "eslint-config-seegno": "^15.0.0",
+    "parcel-bundler": "^1.12.4"
+  },
+  "alias": {
+    "components": "./src/components",
+    "data-analysis": "./src/data-analysis",
+    "config": "./config",
+    "service": "./src/service",
+    "src": "./src",
+    "strategies": "./src/strategies"
+  },
+  "lint-staged": {
+    "**/*.js": "eslint"
+  }
+}

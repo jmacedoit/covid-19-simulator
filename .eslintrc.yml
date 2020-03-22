@@ -1,0 +1,9 @@
+extends: seegno
+
+rules:
+  no-console: off
+  sort-keys: off
+  id-length: off
+
+env:
+  browser: true
