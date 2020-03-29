@@ -4,7 +4,7 @@
  */
 
 import { Normalize } from 'styled-normalize';
-import App from 'src/application.js';
+import App from 'components/application';
 import React, { Fragment } from 'react';
 
 /**

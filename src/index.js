@@ -5,7 +5,8 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Root from 'src/root';
+import Root from 'components/root';
+import 'threads/register'; // eslint-disable-line sort-imports-es6/sort-imports-es6
 
 /**
  * Render react into a container.
