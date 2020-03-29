@@ -4,7 +4,7 @@
   "description": "Covid-19 Simulator",
   "main": "index.js",
   "scripts": {
-    "build": "parcel build ./src/index.html",
+    "build": "rm -rf dist && rm -rf docs && parcel build ./src/index.html && cp -R dist docs",
     "start": "parcel ./src/index.html",
     "lint": "eslint src",
     "lint-staged": "lint-staged"
