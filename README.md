@@ -1,6 +1,6 @@
 # Covid-19 Simulator
 
-Covid-19 Simulator allows anyone to simulate how the numbers of covid-19 will evolve in a country or region by allowing to interactively play with different parameters and observe their effect.
+Covid-19 Simulator allows anyone to simulate how the numbers of covid-19 can evolve by allowing to interactively play with different parameters and observe their effects.
 
 ## Controlable Parameters:
 
