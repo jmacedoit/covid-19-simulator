@@ -1,0 +1,12 @@
+extends: seegno
+
+rules:
+  no-console: off
+  sort-keys: off
+  id-length: off
+  react/jsx-curly-brace-presence: off
+  react/prefer-stateless-function: off
+  new-cap: off
+
+env:
+  browser: true
