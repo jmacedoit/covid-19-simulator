@@ -4,6 +4,7 @@
   "description": "Covid-19 Simulator",
   "main": "index.js",
   "scripts": {
+    "build-pages": "parcel build ./src/index.html --public-url /covid-19-simulator",
     "build": "parcel build ./src/index.html",
     "start": "parcel ./src/index.html",
     "lint": "eslint src",
