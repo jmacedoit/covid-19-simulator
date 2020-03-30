@@ -7,6 +7,7 @@ import { expose } from 'threads/worker';
 import { isEmpty, range } from 'lodash';
 import distributions from 'distributions';
 import log from 'loglevel';
+import randomNormal from 'random-normal';
 import weighted from 'weighted';
 
 /**
@@ -55,6 +56,12 @@ const infectionState = {
 };
 
 /**
+ * Optimization data.
+ */
+
+const optimizationData = {};
+
+/**
  * Up sample size.
  */
 
@@ -95,22 +102,80 @@ function createFates(people, excludeDiagnosed) {
  */
 
 function calculateStats() {
-  const diagnosed = studyPopulation.filter(person => person.infectionState === infectionState.DIAGNOSED);
-  const infected = studyPopulation.filter(person => person.healthState === healthState.INFECTED);
+  let reportedInfected = 0;
+  let reportedRecovered = 0;
+  let reportedTotalInfected = 0;
+  let dead = 0;
+  let infected = 0;
+  let newReportedInfected = 0;
+  let newInfected = 0;
+  let recovered = 0;
+  let totalInfected = 0;
 
-  return {
+  const studyPopulationLength = studyPopulation.length;
+  const simulationDay = simulationState.day;
+  const { DIAGNOSED } = infectionState;
+  const { DEAD, HEALTHY, INFECTED, RECOVERED } = healthState;
+
+  for (let i = 0; i < studyPopulationLength; i++) {
+    const person = studyPopulation[i];
+    const personInfectionState = person.infectionState;
+    const personHealthState = person.healthState;
+
+    if (personInfectionState === DIAGNOSED) {
+      if (personHealthState === INFECTED) {
+        reportedInfected++;
+      }
+
+      if (personHealthState === RECOVERED) {
+        reportedRecovered++;
+      }
+    }
+
+    if (personInfectionState === DIAGNOSED || personHealthState === DEAD) {
+      reportedTotalInfected++;
+    }
+
+    if (personHealthState === DEAD) {
+      dead++;
+    }
+
+    if (personHealthState === INFECTED) {
+      infected++;
+    }
+
+    if (person.diagnosedDay === simulationDay) {
+      newReportedInfected++;
+    }
+
+    if (person.infectedDay === simulationDay) {
+      newInfected++;
+    }
+
+    if (personHealthState === RECOVERED) {
+      recovered++;
+    }
+
+    if (personHealthState !== HEALTHY) {
+      totalInfected++;
+    }
+  }
+
+  const stats = {
     day: simulationState.day,
-    reportedInfected: diagnosed.filter(person => person.healthState === healthState.INFECTED).length,
-    reportedRecovered: diagnosed.filter(person => person.healthState === healthState.RECOVERED).length,
-    reportedTotalInfected: studyPopulation.filter(person => person.infectionState === infectionState.DIAGNOSED && person.healthState !== healthState.HEALTHY || person.healthState === healthState.DEAD).length,
-    dead: studyPopulation.filter(person => person.healthState === healthState.DEAD).length,
-    infected: infected.length,
-    newReportedInfected: diagnosed.filter(person => person.diagnosedDay === simulationState.day).length,
-    newInfected: infected.filter(person => person.infectedDay === simulationState.day).length,
-    recovered: studyPopulation.filter(person => person.healthState === healthState.RECOVERED).length,
-    totalInfected: studyPopulation.filter(person => person.healthState !== healthState.HEALTHY).length,
+    reportedInfected,
+    reportedRecovered,
+    reportedTotalInfected,
+    dead,
+    infected,
+    newReportedInfected,
+    newInfected,
+    recovered,
+    totalInfected,
     totalPopulation: studyPopulation.length
   };
+
+  return stats;
 }
 
 /**
@@ -149,6 +214,24 @@ function virtualizeRawStats(stats) {
       totalPopulation: totalPopulation / subSamplingFactor
     };
   });
+}
+
+/**
+ * Efficient truncated normal distribution sampling.
+ */
+
+function sampleDay(distributionValues, distributionWeights, mean, stdev, truncationValue) { // eslint-disable-line max-params
+  if (truncationValue - mean < stdev) {
+    let day;
+
+    do {
+      day = Math.round(randomNormal({ mean, dev: stdev }));
+    } while (day < truncationValue);
+
+    return day;
+  }
+
+  return weighted.select(distributionValues.slice(truncationValue), distributionWeights.slice(truncationValue));
 }
 
 /**
@@ -241,26 +324,52 @@ function initialize() {
 
 function infect() {
   const { averageRecoveringDays, initialTransmissionBoost, measuresSeverity, population, transmissibility } = simulationParameters;
-  const susceptible = studyPopulation.filter(person => person.healthState === healthState.HEALTHY);
-  const infectedFreeCount = studyPopulation.filter(person => person.healthState === healthState.INFECTED && person.infectionState !== infectionState.DIAGNOSED).length;
-  const susceptibleCount = susceptible.length;
-  const allAffectedCount = studyPopulation.filter(person => person.healthState !== healthState.HEALTHY).length;
+  let susceptibleCount = 0;
+  let infectedFreeCount = 0;
+  let allAffectedCount = 0;
+
+  for (let i = 0; i < studyPopulation.length; i++) {
+    if (studyPopulation[i].healthState === healthState.INFECTED && studyPopulation[i].infectionState !== infectionState.DIAGNOSED) {
+      infectedFreeCount++;
+    }
+
+    if (studyPopulation[i].healthState !== healthState.HEALTHY) {
+      allAffectedCount++;
+    } else {
+      susceptibleCount++;
+    }
+  }
+
   const healthyPopulationRatio = susceptibleCount / upsampleSize(population);
   const initialContagionEffect = allAffectedCount => (initialTransmissionBoost - 1) * Math.exp(-(allAffectedCount * 300 / upsampleSize(population))) + 1;
   const contagionFactor = (1 - measuresSeverity) * transmissibility * initialContagionEffect(allAffectedCount);
   const toBeInfectedCount = infectedFreeCount * healthyPopulationRatio * contagionFactor * (1 / averageRecoveringDays);
 
-  log.debug('Infected before:', studyPopulation.filter(person => person.healthState === healthState.INFECTED).length);
-
-  for (let i = 0; i < Math.round(toBeInfectedCount); i++) {
-    susceptible[i].healthState = healthState.INFECTED;
-    susceptible[i].infectedDay = simulationState.day;
-    susceptible[i].infectionState = infectionState.UNDETECTED;
+  if (log.getLevel() <= log.levels.DEBUG) {
+    log.debug('Infected before:', studyPopulation.filter(person => person.healthState === healthState.INFECTED).length);
   }
 
-  createFates(susceptible.slice(0, Math.round(toBeInfectedCount)));
+  const justInfected = [];
+  let i = 0; let j = 0;
 
-  log.debug('Infected after:', studyPopulation.filter(person => person.healthState === healthState.INFECTED).length);
+  while (i < Math.round(toBeInfectedCount) && j < studyPopulation.length) {
+    if (studyPopulation[j].healthState === healthState.HEALTHY) {
+      studyPopulation[j].healthState = healthState.INFECTED;
+      studyPopulation[j].infectedDay = simulationState.day;
+      studyPopulation[j].infectionState = infectionState.UNDETECTED;
+      justInfected.push(studyPopulation[j]);
+
+      i++;
+    }
+
+    j++;
+  }
+
+  createFates(justInfected);
+
+  if (log.getLevel() <= log.levels.DEBUG) {
+    log.debug('Infected after:', studyPopulation.filter(person => person.healthState === healthState.INFECTED).length);
+  }
 }
 
 /**
@@ -269,24 +378,28 @@ function infect() {
 
 function recover() {
   const { averageRecoveringDays } = simulationParameters;
-  const personCanRecoverThisDay = person => !person.willDie && (person.infectionState === infectionState.DIAGNOSED || !person.willBeDiagnosed) && person.infectedDay !== simulationState.day;
-  const infected = studyPopulation.filter(person => person.healthState === healthState.INFECTED && personCanRecoverThisDay(person));
+  const personCanRecover = person => !person.willDie && (person.infectionState === infectionState.DIAGNOSED || !person.willBeDiagnosed);
+  const infected = optimizationData.infectedTilToday.filter(person => personCanRecover(person));
   const recoverDayDistribution = distributions.Normal(averageRecoveringDays, averageRecoveringDays / 5);
   const daysList = range(300);
-  const daysDistributionWeights = daysList.map(day => 1000 * recoverDayDistribution.pdf(day));
+  const daysDistributionWeights = daysList.map(day => 100000 * recoverDayDistribution.pdf(day));
 
-  log.debug('Recovered before:', studyPopulation.filter(person => person.healthState === healthState.RECOVERED).length);
+  if (log.getLevel() <= log.levels.DEBUG) {
+    log.debug('Recovered before:', studyPopulation.filter(person => person.healthState === healthState.RECOVERED).length);
+  }
 
   infected.forEach(infectedPerson => {
     const daysSinceInfected = simulationState.day - infectedPerson.infectedDay;
-    const dayThisPersonWouldRecover = weighted.select(daysList.slice(daysSinceInfected), daysDistributionWeights.slice(daysSinceInfected));
+    const dayThisPersonWouldRecover = sampleDay(daysList, daysDistributionWeights, averageRecoveringDays, averageRecoveringDays / 5, daysSinceInfected);
 
     if (daysSinceInfected === dayThisPersonWouldRecover) {
       infectedPerson.healthState = healthState.RECOVERED;
     }
   });
 
-  log.debug('Recovered after:', studyPopulation.filter(person => person.healthState === healthState.RECOVERED).length);
+  if (log.getLevel() <= log.levels.DEBUG) {
+    log.debug('Recovered after:', studyPopulation.filter(person => person.healthState === healthState.RECOVERED).length);
+  }
 }
 
 /**
@@ -295,24 +408,28 @@ function recover() {
 
 function kill() {
   const { averageDyingDays } = simulationParameters;
-  const personCanDyeThisDay = person => person.willDie && (person.infectionState === infectionState.DIAGNOSED || !person.willBeDiagnosed) && person.infectedDay !== simulationState.day;
-  const infectedThatWillDie = studyPopulation.filter(person => person.healthState === healthState.INFECTED && personCanDyeThisDay(person));
+  const personCanDyeThisDay = person => person.willDie && (person.infectionState === infectionState.DIAGNOSED || !person.willBeDiagnosed);
+  const infectedThatWillDie = optimizationData.infectedTilToday.filter(person => personCanDyeThisDay(person));
   const dyingDayDistribution = distributions.Normal(averageDyingDays, averageDyingDays / 5);
   const daysList = range(300);
   const daysDistributionWeights = daysList.map(day => 1000 * dyingDayDistribution.pdf(day));
 
-  log.debug('Dead before:', studyPopulation.filter(person => person.healthState === healthState.DEAD).length);
+  if (log.getLevel() <= log.levels.DEBUG) {
+    log.debug('Dead before:', studyPopulation.filter(person => person.healthState === healthState.DEAD).length);
+  }
 
   infectedThatWillDie.forEach(infectedPerson => {
     const daysSinceInfected = simulationState.day - infectedPerson.infectedDay;
-    const dayThisPersonWouldDie = weighted.select(daysList.slice(daysSinceInfected), daysDistributionWeights.slice(daysSinceInfected));
+    const dayThisPersonWouldDie = sampleDay(daysList, daysDistributionWeights, averageDyingDays, averageDyingDays / 5, daysSinceInfected);
 
     if (daysSinceInfected === dayThisPersonWouldDie) {
       infectedPerson.healthState = healthState.DEAD;
     }
   });
 
-  log.debug('Dead after:', studyPopulation.filter(person => person.healthState === healthState.DEAD).length);
+  if (log.getLevel() <= log.levels.DEBUG) {
+    log.debug('Dead after:', studyPopulation.filter(person => person.healthState === healthState.DEAD).length);
+  }
 }
 
 /**
@@ -321,17 +438,19 @@ function kill() {
 
 function diagnose() {
   const { averageDiagnosticDays } = simulationParameters;
-  const personCanBeDiagnosedThisDay = person => person.willBeDiagnosed && person.infectionState === infectionState.UNDETECTED && person.infectedDay !== simulationState.day;
-  const infectedThatWillBeDiagnosed = studyPopulation.filter(person => person.healthState === healthState.INFECTED && personCanBeDiagnosedThisDay(person));
+  const personCanBeDiagnosedThisDay = person => person.willBeDiagnosed && person.infectionState === infectionState.UNDETECTED;
+  const infectedThatWillBeDiagnosed = optimizationData.infectedTilToday.filter(person => personCanBeDiagnosedThisDay(person));
   const diagnosticDayDistribution = distributions.Normal(averageDiagnosticDays, averageDiagnosticDays / 5);
   const daysList = range(300);
   const daysDistributionWeights = daysList.map(day => 1000 * diagnosticDayDistribution.pdf(day));
 
-  log.debug('Diagnosed before:', studyPopulation.filter(person => person.infectionState === infectionState.DIAGNOSED).length);
+  if (log.getLevel() <= log.levels.DEBUG) {
+    log.debug('Diagnosed before:', studyPopulation.filter(person => person.infectionState === infectionState.DIAGNOSED).length);
+  }
 
   infectedThatWillBeDiagnosed.forEach(infectedPerson => {
     const daysSinceInfected = simulationState.day - infectedPerson.infectedDay;
-    const dayThisPersonWouldBeDiagnosed = weighted.select(daysList.slice(daysSinceInfected), daysDistributionWeights.slice(daysSinceInfected));
+    const dayThisPersonWouldBeDiagnosed = sampleDay(daysList, daysDistributionWeights, averageDiagnosticDays, averageDiagnosticDays / 5, daysSinceInfected);
 
     if (daysSinceInfected === dayThisPersonWouldBeDiagnosed) {
       infectedPerson.infectionState = infectionState.DIAGNOSED;
@@ -339,7 +458,23 @@ function diagnose() {
     }
   });
 
-  log.debug('Diagnosed after:', studyPopulation.filter(person => person.infectionState === infectionState.DIAGNOSED).length);
+  if (log.getLevel() <= log.levels.DEBUG) {
+    log.debug('Diagnosed after:', studyPopulation.filter(person => person.infectionState === infectionState.DIAGNOSED).length);
+  }
+}
+
+/**
+ * Prepare data.
+ */
+
+function prepareData() {
+  optimizationData.infectedTilToday = [];
+
+  for (let i = 0; i < studyPopulation.length; i++) {
+    if (studyPopulation[i].healthState === healthState.INFECTED) {
+      optimizationData.infectedTilToday.push(studyPopulation[i]);
+    }
+  }
 }
 
 /**
@@ -349,6 +484,7 @@ function diagnose() {
 function iterate() {
   simulationState.day++;
 
+  prepareData();
   infect();
   recover();
   kill();

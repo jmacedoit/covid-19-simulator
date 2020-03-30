@@ -222,7 +222,7 @@ class App extends Component {
         setStats(simulationState.stats);
         setParametersChanges(simulationState.parametersChanges);
       }
-    }, 100);
+    }, 25);
   }
 
   handleResetParameters = () => {
