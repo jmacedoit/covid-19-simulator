@@ -20,7 +20,7 @@ class RecoveredVsDeadGraphic extends Component {
     const graphicData = [{
       data: stats.map(({ day, dead, reportedRecovered }) => ({
         x: day,
-        y: dead / (reportedRecovered + dead)
+        y: dead / Math.max(reportedRecovered + dead, 1)
       })).slice(),
       id: 'Dead'
     }, {
