@@ -148,7 +148,6 @@ class SimulationControls extends Component {
 
           <StyledSlider
             disabled={!stopActive}
-            marks
             max={simulationDays}
             min={0}
             onChange={(event, value) => { setTimeWindow(value); }}
