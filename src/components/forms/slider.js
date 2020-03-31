@@ -30,6 +30,11 @@ const StyledInput = withStyles({
     transform: 'translateY(-4px)'
   },
   input: {
+    width: '70px',
+    borderRadius: '4px',
+    paddingTop: '7px',
+    paddingLeft: '4px',
+    background: '#e3e3e3',
     fontSize: '10px'
   }
 })(Input);
