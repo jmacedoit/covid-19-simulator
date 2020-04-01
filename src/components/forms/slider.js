@@ -4,8 +4,8 @@
  */
 
 import { Input, Slider, Tooltip, withStyles } from '@material-ui/core';
+import { clamp, get } from 'lodash';
 import { connectField } from 'uniforms';
-import { get } from 'lodash';
 import { useTheme } from '@material-ui/core/styles';
 import React from 'react';
 import styled from 'styled-components';
@@ -45,6 +45,8 @@ const StyledInput = withStyles({
 
 function FormSlider({ disabled, field, label, onChange, value }) {
   const theme = useTheme();
+  const minimum = get(field, 'minimum');
+  const maximum = get(field, 'maximum');
 
   return (
     <>
@@ -64,10 +66,10 @@ function FormSlider({ disabled, field, label, onChange, value }) {
       <Slider
         aria-label={label}
         disabled={disabled}
-        max={get(field, 'maximum')}
-        min={get(field, 'minimum')}
+        max={maximum}
+        min={minimum}
         onChange={(event, value) => {
-          onChange(value);
+          onChange(clamp(value, minimum, maximum));
         }}
         step={get(field, 'step', 1)}
         value={value}
@@ -76,11 +78,14 @@ function FormSlider({ disabled, field, label, onChange, value }) {
       <StyledInput
         disabled={disabled}
         disableUnderline
-        inputProps={{ 'aria-label': 'label' }}
-        max={get(field, 'maximum')}
-        min={get(field, 'minimum')}
+        inputProps={{
+          'aria-label': label,
+          step: get(field, 'step', 1)
+        }}
+        max={maximum}
+        min={minimum}
         onChange={event => {
-          onChange(Number(event.target.value));
+          onChange(clamp(Number(event.target.value), minimum, maximum));
         }}
         type={'number'}
         value={value}
