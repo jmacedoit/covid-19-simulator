@@ -322,7 +322,7 @@ function initialize() {
  */
 
 function infect() {
-  const { averageRecoveringDays, initialTransmissionBoost, measuresSeverity, population, transmissibility } = simulationParameters;
+  const { initialTransmissionBoost, measuresSeverity, population, transmissibility } = simulationParameters;
   let susceptibleCount = 0;
   let infectedFreeCount = 0;
   let allAffectedCount = 0;
@@ -342,7 +342,7 @@ function infect() {
   const healthyPopulationRatio = susceptibleCount / upsampleSize(population);
   const initialContagionEffect = allAffectedCount => (initialTransmissionBoost - 1) * Math.exp(-(allAffectedCount * 300 / upsampleSize(population))) + 1;
   const contagionFactor = (1 - measuresSeverity) * transmissibility * initialContagionEffect(allAffectedCount);
-  const toBeInfectedCount = infectedFreeCount * healthyPopulationRatio * contagionFactor * (1 / averageRecoveringDays);
+  const toBeInfectedCount = infectedFreeCount * healthyPopulationRatio * contagionFactor * 0.05;
 
   if (log.getLevel() <= log.levels.DEBUG) {
     log.debug('Infected before:', studyPopulation.filter(person => person.healthState === healthState.INFECTED).length);

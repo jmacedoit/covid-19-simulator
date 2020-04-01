@@ -14,7 +14,7 @@ Covid-19 Simulator allows anyone to simulate how the numbers of covid-19 can evo
 
 - **Initial dead**: Number of individuals assigned the dead state at the start of the simulation. It is assumed that all dead are reported, so this number corresponds to both the true and reported dead cases.
 
-- **Transmissibility**: The transmissibility rate, reproduction number or R0 of the virus. Represents how many people each infected person will infect, on average, if no contention measures are applied.
+- **Transmissibility**: The transmissibility rate of the virus. Determines how contagious is the virus on a totally susceptible population where there are no fighting measures in place. 
 
 - **Under reporting factor**: The ratio between the number of cases reported and true number of cases.
 

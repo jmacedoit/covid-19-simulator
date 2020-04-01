@@ -54,14 +54,14 @@ const schema = {
       component: Slider
     },
     transmissibility: {
-      description: 'The transmissibility rate, reproduction number or R0 of the virus. Represents how many people each infected person will infect, on average, if no contention measures are applied.',
+      description: 'The transmissibility rate of the virus. Determines how contagious is the virus on a totally susceptible population where there are no fighting measures in place.',
       type: 'integer',
       minimum: 0,
       maximum: 30,
       component: Slider
     },
     underReportingFactor: {
-      description: 'The ratio between the number of cases reported and true number of cases.',
+      description: 'The ratio between the number of cases reported and true number of cases. This ratio is respected in the beginning of the simulation, but it can change due to the different dynamics acting on the numbers.',
       type: 'integer',
       minimum: 1,
       maximum: 100,
