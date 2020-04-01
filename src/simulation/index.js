@@ -183,7 +183,7 @@ function calculateStats() {
  */
 
 function virtualizeRawStats(stats) {
-  const { daysSinceFirstDiagnostic, subSamplingFactor } = simulationParameters;
+  const { subSamplingFactor } = simulationParameters;
 
   return stats.map(dayStat => {
     const {
@@ -201,7 +201,7 @@ function virtualizeRawStats(stats) {
     } = dayStat;
 
     return {
-      day: daysSinceFirstDiagnostic + day,
+      day,
       reportedInfected: reportedInfected / subSamplingFactor,
       reportedRecovered: reportedRecovered / subSamplingFactor,
       reportedTotalInfected: reportedTotalInfected / subSamplingFactor,
@@ -240,7 +240,7 @@ function sampleDay(distributionValues, distributionWeights, mean, stdev, truncat
 
 function initialize() {
   const {
-    averageRecoveringDays,
+    daysSinceFirstDiagnostic,
     initialDead,
     initialReportedInfected,
     initialReportedRecovered,
@@ -249,11 +249,10 @@ function initialize() {
   } = simulationParameters;
 
   studyPopulation = [];
-  simulationState = { ...initialSimulationState };
+  simulationState = { ...initialSimulationState, day: daysSinceFirstDiagnostic };
 
-  const daysBackDiagnosticDistribution = distributions.Normal(averageRecoveringDays, averageRecoveringDays / 5);
-  const daysList = range(100);
-  const daysBackDistributionWeights = daysList.map(day => 1 - daysBackDiagnosticDistribution.cdf(day));
+  const daysList = range(daysSinceFirstDiagnostic + 1).slice(1);
+  const daysBackDistributionWeights = daysList.map(day => Math.exp(Math.log(initialReportedInfected) / daysSinceFirstDiagnostic * -(day - daysSinceFirstDiagnostic)));
 
   for (let i = 0; i < upsampleSizeRounded(population); i++) {
     studyPopulation.push({
@@ -266,7 +265,7 @@ function initialize() {
     studyPopulation[i].healthState = healthState.INFECTED;
     studyPopulation[i].infectionState = infectionState.DIAGNOSED;
     studyPopulation[i].willBeDiagnosed = true;
-    studyPopulation[i].infectedDay = -weighted.select(daysList, daysBackDistributionWeights);
+    studyPopulation[i].infectedDay = -weighted.select(daysList, daysBackDistributionWeights) + simulationState.day;
   }
 
   let lastIndex = upsampleSizeRounded(initialReportedInfected);
@@ -275,7 +274,7 @@ function initialize() {
   for (let i = lastIndex; i < lastIndex + upsampleSizeRounded(totalNonDiagnosedInfected); i++) {
     studyPopulation[i].healthState = healthState.INFECTED;
     studyPopulation[i].infectionState = infectionState.UNDETECTED;
-    studyPopulation[i].infectedDay = -weighted.select(daysList, daysBackDistributionWeights);
+    studyPopulation[i].infectedDay = -weighted.select(daysList, daysBackDistributionWeights) + simulationState.day;
   }
 
   lastIndex += upsampleSizeRounded(totalNonDiagnosedInfected);
@@ -303,7 +302,7 @@ function initialize() {
 
   lastIndex += upsampleSizeRounded(initialDead);
 
-  createFates(studyPopulation.filter(person => person.healthState === healthState.INFECTED && person.infectionState === infectionState.UNDETECTED), true);
+  createFates(studyPopulation.filter(person => person.healthState === healthState.INFECTED && person.infectionState === infectionState.UNDETECTED), false);
 
   simulationStats = [calculateStats()];
 
