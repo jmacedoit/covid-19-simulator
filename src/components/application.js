@@ -92,13 +92,14 @@ const Padder = styled.div`
  * Title component.
  */
 
-const Title = styled.div`
+const Title = styled.h1`
   color: #696868;
   font-size: 56px;
   font-family: 'Crete Round', serif;
   font-weight: 500;
   margin-bottom: 40px;
   text-align: center;
+  margin-top: 0;
 `;
 
 /**
