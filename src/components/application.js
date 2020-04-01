@@ -44,10 +44,10 @@ const theme = createMuiTheme({
 
 const defaultSimulationParameters = {
   population: 10000000,
-  daysSinceFirstDiagnostic: 0,
-  initialReportedInfected: 1000,
-  initialReportedRecovered: 1000,
-  initialDead: 100,
+  daysSinceFirstDiagnostic: 30,
+  initialReportedInfected: 7500,
+  initialReportedRecovered: 50,
+  initialDead: 150,
   averageRecoveringDays: 20,
   averageDyingDays: 7,
   averageDiagnosticDays: 6,
