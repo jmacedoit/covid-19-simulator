@@ -28,7 +28,7 @@ const schema = {
     daysSinceFirstDiagnostic: {
       description: 'Number of days since the epidemic started. This does not change the simulation results, it just modifies the days displayed on the x axis on the charts.',
       type: 'integer',
-      minimum: 0,
+      minimum: 1,
       maximum: 300,
       component: Slider
     },
