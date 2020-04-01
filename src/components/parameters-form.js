@@ -79,7 +79,7 @@ const schema = {
       description: 'The average number of days between contagion and diagnosis for individuals that will be diagnosed.',
       type: 'integer',
       minimum: 1,
-      maxium: 60,
+      maximum: 60,
       component: Slider
     },
     averageRecoveringDays: {
