@@ -231,7 +231,17 @@ function sampleDay(distributionValues, distributionWeights, mean, stdev, truncat
     return day;
   }
 
-  return weighted.select(distributionValues.slice(truncationValue), distributionWeights.slice(truncationValue));
+  let day;
+
+  try {
+    day = weighted.select(distributionValues.slice(truncationValue), distributionWeights.slice(truncationValue));
+  } catch (error) {
+    if (error instanceof RangeError) {
+      day = weighted.select(distributionValues.slice(truncationValue), distributionWeights.slice(truncationValue).map(() => 1));
+    }
+  }
+
+  return day;
 }
 
 /**
