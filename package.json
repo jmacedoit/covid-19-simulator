@@ -31,6 +31,7 @@
   "dependencies": {
     "@material-ui/core": "^4.9.7",
     "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.47",
     "@nivo/line": "^0.61.1",
     "@nivo/stream": "^0.61.1",
     "@types/react": "^16.9.25",
@@ -41,6 +42,7 @@
     "color": "^3.1.2",
     "colormix": "^3.2.0",
     "components": "^0.1.0",
+    "copy-to-clipboard": "^3.3.1",
     "distributions": "^2.1.0",
     "form": "^0.2.4",
     "grunt": "^0.4.5",
@@ -49,6 +51,7 @@
     "moment": "^2.24.0",
     "natural-spline-interpolator": "^1.0.2",
     "prop-types": "^15.7.2",
+    "query-string": "^6.11.1",
     "random-normal": "^1.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",

@@ -4,10 +4,12 @@
  */
 
 import { Col, Container, Row } from 'react-grid-system';
+import { Snackbar } from '@material-ui/core';
 import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import { Worker, spawn } from 'threads';
 import { compose, withState } from 'recompose';
-import { pick, takeRight } from 'lodash';
+import { mapValues, pick, takeRight } from 'lodash';
+import Alert from '@material-ui/lab/Alert';
 import DailiyNewCasesGraphic from 'components/graphics/daily-new-cases-graphic';
 import GitHubButton from 'react-github-btn';
 import GitHubIcon from '@material-ui/icons/GitHub';
@@ -18,6 +20,8 @@ import RecoveredVsDeadGraphic from 'components/graphics/recovered-vs-dead-graphi
 import ReportedGraphic from 'components/graphics/reported-graphic';
 import SimulationControls from 'components/simulation-controls';
 import breakpoints from 'styles/breakpoints';
+import copy from 'copy-to-clipboard';
+import queryString from 'query-string';
 import styled from 'styled-components';
 
 /**
@@ -182,6 +186,14 @@ class App extends Component {
     }
   }
 
+  handleShare = () => {
+    const { setSnackbarOpen } = this.props;
+
+    copy(location.href);
+
+    setSnackbarOpen(true);
+  }
+
   handlePause = () => {
     const { setPlaying } = this.props;
 
@@ -230,21 +242,31 @@ class App extends Component {
     this.resetSimulationParameters();
   }
 
-  handleSetSimulationParameters = async () => {
-    const { parameters, setSimulationParameters, simulation } = this.props;
+  handleSetSimulationParameters = async overwritingParameters => {
+    const { parameters, setParameters, setSimulationParameters, simulation } = this.props;
+    const mergedParameters = pick({
+      ...parameters,
+      ...overwritingParameters
+    }, Object.keys(defaultSimulationParameters));
 
-    setSimulationParameters(parameters);
+    setSimulationParameters(mergedParameters);
+    setParameters(mergedParameters);
 
-    await simulation.setParameters(parameters);
+    const parametersQueryString = queryString.stringify(mergedParameters);
+
+    history.replaceState(null, '', `?${parametersQueryString}`);
+
+    await simulation.setParameters(mergedParameters);
   }
 
   async componentDidMount() {
     const { setSimulation } = this.props;
     const simulation = await spawn(new Worker('../simulation/index.js'));
+    const queryParameters = queryString.parse(location.search);
 
     setSimulation(simulation);
 
-    await this.handleSetSimulationParameters();
+    await this.handleSetSimulationParameters(mapValues(queryParameters || {}, value => Number(value)));
   }
 
   render() {
@@ -255,8 +277,10 @@ class App extends Component {
       parametersChanges,
       runningIterate,
       setParameters,
+      setSnackbarOpen,
       setTimeWindow,
       simulationParameters,
+      snackbarOpen,
       stats,
       timeWindow
     } = this.props;
@@ -291,6 +315,7 @@ class App extends Component {
                 />
 
                 <SimulationControls
+                  handleShare={this.handleShare}
                   pause={this.handlePause}
                   pauseActive={isPlaying}
                   play={this.handlePlay}
@@ -358,6 +383,16 @@ class App extends Component {
             </Container>
           </Padder>
         </Wrapper>
+
+        <Snackbar
+          autoHideDuration={2000}
+          onClose={() => { setSnackbarOpen(false); }}
+          open={snackbarOpen}
+        >
+          <Alert onClose={() => { setSnackbarOpen(false); }}>
+            {'Link with applied parameters copied! Paste it anywhere!'}
+          </Alert>
+        </Snackbar>
       </ThemeProvider>
     );
   }
@@ -374,6 +409,7 @@ export default compose(
   withState('simulation', 'setSimulation', {}),
   withState('initialized', 'setInitialized', false),
   withState('runningIterate', 'setRunningIterate', false),
+  withState('snackbarOpen', 'setSnackbarOpen', false),
   withState('simulationParameters', 'setSimulationParameters', {}),
   withState('isPlaying', 'setPlaying', false),
   withState('isStopped', 'setStopped', true),
