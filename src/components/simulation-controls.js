@@ -3,15 +3,14 @@
  * Module dependencies.
  */
 
-import { Slider } from '@material-ui/core';
+import { Button, IconButton, Slider } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
+import AssignmentTurnedInRoundedIcon from '@material-ui/icons/AssignmentTurnedInRounded';
 import PauseRoundedIcon from '@material-ui/icons/PauseRounded';
 import PlayArrowRoundedIcon from '@material-ui/icons/PlayArrowRounded';
 import React, { Component } from 'react';
-import SaveAltRoundedIcon from '@material-ui/icons/SaveAltRounded';
 import SettingsBackupRestoreRoundedIcon from '@material-ui/icons/SettingsBackupRestoreRounded';
+import ShareRoundedIcon from '@material-ui/icons/ShareRounded';
 import StopRoundedIcon from '@material-ui/icons/StopRounded';
 import breakpoints from 'styles/breakpoints';
 import styled from 'styled-components';
@@ -25,6 +24,7 @@ const ControlsContainer = styled.div`
   margin-bottom: 12px;
   display: flex;
   justify-content: center;
+  text-align: center;
 `;
 
 /**
@@ -32,11 +32,11 @@ const ControlsContainer = styled.div`
  */
 
 const TextButtonContainer = styled.div`
-  display: inline;
+  display: inline-block;
   margin: 0 8px;
 
   @media (max-width: ${breakpoints.sm}px) {
-    margin: 0 4px;
+    margin: 4px;
   }
 `;
 
@@ -77,6 +77,7 @@ class SimulationControls extends Component {
 
   render() {
     const {
+      handleShare,
       pause,
       pauseActive,
       play,
@@ -124,7 +125,7 @@ class SimulationControls extends Component {
                 disabled={!setSimulationParametersActive}
                 onClick={setSimulationParameters}
                 size={'small'}
-                startIcon={<SaveAltRoundedIcon />}
+                startIcon={<AssignmentTurnedInRoundedIcon />}
                 variant={'contained'}
               >
                 {'Apply'}
@@ -143,7 +144,17 @@ class SimulationControls extends Component {
               </Button>
             </TextButtonContainer>
 
-            <div style={{ display: 'inline-block', width: 12 }} />
+            <TextButtonContainer>
+              <Button
+                color={'primary'}
+                onClick={handleShare}
+                size={'small'}
+                startIcon={<ShareRoundedIcon />}
+                variant={'outlined'}
+              >
+                {'Share'}
+              </Button>
+            </TextButtonContainer>
           </ButtonGroupContainer>
 
           <StyledSlider

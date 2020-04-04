@@ -72,7 +72,7 @@ function FormSlider({ disabled, field, label, onChange, value }) {
           onChange(clamp(value, minimum, maximum));
         }}
         step={get(field, 'step', 1)}
-        value={value}
+        value={Number(value)}
       />
 
       <StyledInput
