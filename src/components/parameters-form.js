@@ -60,8 +60,16 @@ const schema = {
       maximum: 30,
       component: Slider
     },
+    ratioCasesDiagnosed: {
+      description: 'The ratio between new cases that will be diagnosed and the total amount of new cases.',
+      type: 'integer',
+      minimum: 0,
+      maximum: 1,
+      step: 0.01,
+      component: Slider
+    },
     underReportingFactor: {
-      description: 'The ratio between the number of cases reported and true number of cases. This ratio is respected in the beginning of the simulation, but it can change due to the different dynamics acting on the numbers.',
+      description: 'The initial ratio between the true number of cases and the number of cases reported. This ratio is respected in the beginning of the simulation, but it can change due to the different dynamics acting on the numbers.',
       type: 'integer',
       minimum: 1,
       maximum: 100,
@@ -275,7 +283,18 @@ class ParametersForm extends Component {
               sm={6}
               xl={2}
             >
-              <AutoField name={'underReportingFactor'} />
+              <AutoField name={'ratioCasesDiagnosed'} />
+            </Col>
+
+            <Col
+              lg={3}
+              sm={6}
+              xl={2}
+            >
+              <AutoField
+                disabled={!isStopped}
+                name={'underReportingFactor'}
+              />
             </Col>
 
             <Col

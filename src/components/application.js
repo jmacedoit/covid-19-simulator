@@ -56,6 +56,7 @@ const defaultSimulationParameters = {
   averageDyingDays: 7,
   averageDiagnosticDays: 6,
   transmissibility: 3,
+  ratioCasesDiagnosed: 0.4,
   underReportingFactor: 10,
   measuresSeverity: 0,
   initialTransmissionBoost: 5,
@@ -170,12 +171,9 @@ class App extends Component {
         'underReportingFactor',
         'measuresSeverity',
         'initialTransmissionBoost',
+        'ratioCasesDiagnosed',
         'trueDeathRate'
       ]);
-
-      console.log('parameters: ', parameters);
-      console.log('defaultSimulationParameters: ', defaultSimulationParameters);
-      console.log('allowedDefaultParameters: ', allowedDefaultParameters);
 
       const parametersToSet = {
         ...parameters,

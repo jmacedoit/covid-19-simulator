@@ -18,7 +18,9 @@ Covid-19 Simulator allows anyone to simulate how the numbers of covid-19 can evo
 
 - **Transmissibility**: The transmissibility rate of the virus. Determines how contagious is the virus on a totally susceptible population where there are no fighting measures in place.
 
-- **Under reporting factor**: The ratio between the number of cases reported and true number of cases.
+- **Ratio of cases diagnosed**: The ratio between new cases that will be diagnosed and the total amount of new cases.
+
+- **Under reporting factor**: The initial ratio between the number of cases reported and true number of cases. This ratio is respected in the beginning of the simulation, but it can change due to the different dynamics acting on the numbers.
 
 - **Measures severity**: This parameter can be roughtly interpreted as the percentage of normal interactions that are being limited by the contention measures in place.
 
