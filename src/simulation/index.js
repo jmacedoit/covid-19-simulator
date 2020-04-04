@@ -83,17 +83,14 @@ function upsampleSizeRounded(poolSize) {
  * Create fates.
  */
 
-function createFates(people, excludeDiagnosed) {
-  const { trueDeathRate, underReportingFactor } = simulationParameters;
+function createFates(people) {
+  const { ratioCasesDiagnosed, trueDeathRate } = simulationParameters;
 
   const infected = people.filter(person => person.healthState === healthState.INFECTED);
 
   infected.forEach(infectedPerson => {
     infectedPerson.willDie = Math.random() <= trueDeathRate * 0.01;
-
-    if (!excludeDiagnosed) {
-      infectedPerson.willBeDiagnosed = Math.random() <= 1 / underReportingFactor;
-    }
+    infectedPerson.willBeDiagnosed = Math.random() <= ratioCasesDiagnosed;
   });
 }
 
@@ -245,6 +242,14 @@ function sampleDay(distributionValues, distributionWeights, mean, stdev, truncat
 }
 
 /**
+ * Estimate exponential back.
+ */
+
+function estimateExponentialBack(dayBack, currentValue, daysSinceFirstOccurrence) {
+  return Math.exp(Math.log(currentValue) / daysSinceFirstOccurrence * -(dayBack - daysSinceFirstOccurrence));
+}
+
+/**
  * Initialize.
  */
 
@@ -262,7 +267,7 @@ function initialize() {
   simulationState = { ...initialSimulationState, day: daysSinceFirstDiagnostic };
 
   const daysList = range(daysSinceFirstDiagnostic + 1).slice(1);
-  const daysBackDistributionWeights = daysList.map(day => Math.exp(Math.log(initialReportedInfected) / daysSinceFirstDiagnostic * -(day - daysSinceFirstDiagnostic)));
+  const daysBackDistributionWeights = daysList.map(day => estimateExponentialBack(day, initialReportedInfected, daysSinceFirstDiagnostic));
 
   for (let i = 0; i < upsampleSizeRounded(population); i++) {
     studyPopulation.push({
@@ -312,7 +317,7 @@ function initialize() {
 
   lastIndex += upsampleSizeRounded(initialDead);
 
-  createFates(studyPopulation.filter(person => person.healthState === healthState.INFECTED && person.infectionState === infectionState.UNDETECTED), false);
+  createFates(studyPopulation.filter(person => person.healthState === healthState.INFECTED && person.infectionState === infectionState.UNDETECTED));
 
   simulationStats = [calculateStats()];
 
